@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Economica&display=swap');
+
+* {
+    font-family: 'Economica';
+font-style: normal;
+font-weight: 400;
+font-size: calc(10px + 2vmin);
+line-height: 0px;
+}
+
+html{ 
+    background: #000000;
+    background-image: url(../../../public/net.png);
+    background-position: center;
+    background-size: cover;
+    
+  }
+  .inputField {
+    border:none;
+    border-radius:20px;
+    background-color: #2B2B2B;
+    color: #D9D9D9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .submitButton {
+    width: 100%;
+    border: none;
+    display: inline-block;
+    border-radius:20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000000;
+    color: #D9D9D9;
+    opacity: 80%
+  }
+  .ask{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 80%
+  }
