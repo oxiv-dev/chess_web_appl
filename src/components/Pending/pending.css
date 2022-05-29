@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Economica&display=swap');
+
+* {
+    font-family: 'Economica';
+font-style: normal;
+font-weight: 400;
+font-size: calc(10px + 2vmin);
+line-height: 0px;
+}
+
+html{ 
+    
+    background: #000000;
+    background-image: url(../../../public/net.png);
+    background-position: center;
+    background-size: cover;
+    font-size: calc(10px + 2vmin);
+  }
+/* .rotate-center {
+	-webkit-animation: rotate-center 80s ease-in-out infinite both;
+	        animation: rotate-center 80s ease-in-out infinite both;
+} */
+
+/* @-webkit-keyframes rotate-center {
+  0% {
+    -webkit-transform: rotate(0);
+            transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+@keyframes rotate-center {
+  0% {
+    -webkit-transform: rotate(0);
+            transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+} */
+
+
+
