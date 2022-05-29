@@ -1,12 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Economica&display=swap');
-
+/* 
 * {
     font-family: 'Economica';
 font-style: normal;
 font-weight: 400;
 font-size: calc(10px + 2vmin);
 line-height: 0px;
-}
+} */
 
 html{ 
     
@@ -15,32 +15,57 @@ html{
     background-position: center;
     background-size: cover;
     font-size: calc(10px + 2vmin);
+    
+    
   }
-/* .rotate-center {
-	-webkit-animation: rotate-center 80s ease-in-out infinite both;
-	        animation: rotate-center 80s ease-in-out infinite both;
-} */
 
-/* @-webkit-keyframes rotate-center {
-  0% {
-    -webkit-transform: rotate(0);
-            transform: rotate(0);
-  }
-  100% {
-    -webkit-transform: rotate(360deg);
-            transform: rotate(360deg);
-  }
+  .rotate-center {
+	-webkit-animation: rotate-center 30s ease-in-out infinite ;
+	        animation: rotate-center 30s ease-in-out infinite ;
 }
-@keyframes rotate-center {
-  0% {
-    -webkit-transform: rotate(0);
-            transform: rotate(0);
+.scale-up-center {
+	-webkit-animation: scale-up-center 5s cubic-bezier(0.390, 0.575, 0.565, 1.000) infinite both;
+	        animation: scale-up-center 5s cubic-bezier(0.390, 0.575, 0.565, 1.000) infinite both;
+}
+@-webkit-keyframes rotate-center {
+    0% {
+      -webkit-transform: rotate(0);
+              transform: rotate(0);
+    }
+    100% {
+      -webkit-transform: rotate(360deg);
+              transform: rotate(360deg);
+    }
   }
-  100% {
-    -webkit-transform: rotate(360deg);
-            transform: rotate(360deg);
+  @keyframes rotate-center {
+    0% {
+      -webkit-transform: rotate(0);
+              transform: rotate(0);
+    }
+    100% {
+      -webkit-transform: rotate(360deg);
+              transform: rotate(360deg);
+    }
   }
-} */
-
-
+  @-webkit-keyframes scale-up-center {
+    0% {
+      -webkit-transform: scale(0.5);
+              transform: scale(0.5);
+    }
+    100% {
+      -webkit-transform: scale(1);
+              transform: scale(1);
+    }
+  }
+  @keyframes scale-up-center {
+    0% {
+      -webkit-transform: scale(0.5);
+              transform: scale(0.5);
+    }
+    100% {
+      -webkit-transform: scale(1);
+              transform: scale(1);
+    }
+  }
+  
 

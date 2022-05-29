@@ -3,6 +3,7 @@ import {Routes} from 'react-router-dom';
 
 import Auth from './components/Auth/Auth';
 import Pending from './components/Pending/Pending';
+import Game from './components/Game/Game';
 
 import "./App.css"
 const App = () => {
@@ -12,6 +13,7 @@ return(
       <Routes>
         <Route path="/" element={<Auth />}></Route>
         <Route path="/pending" element={<Pending />}></Route>
+        <Route path="/game" element={<Game />}></Route>
       </Routes>
    </div>
    </Router>
