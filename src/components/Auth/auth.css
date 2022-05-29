@@ -6,6 +6,7 @@ font-style: normal;
 font-weight: 400;
 font-size: calc(10px + 2vmin);
 line-height: 0px;
+
 }
 
 html{ 
@@ -13,7 +14,7 @@ html{
     background-image: url(../../../public/net.png);
     background-position: center;
     background-size: cover;
-    
+    overflow:hidden;
   }
   .inputField {
     border:none;
