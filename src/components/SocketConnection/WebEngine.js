@@ -2,6 +2,7 @@ class WebEngine
 {
     constructor()
     {
+        this.isConOpened = false; 
         this.socket = null;
         this.conOpenCallbacks = [];
         this.messageCallbacks = [];
@@ -19,6 +20,7 @@ class WebEngine
         if (this.socket != null)
             this.socket.close(); 
         this.socket = this.createSocket();
+        this.isConOpened = true;
     }
     addConnectCallback(cb)
     {
@@ -38,22 +40,26 @@ class WebEngine
     }
     closeConnection()
     {
-        console.log("Socket obj: ", this.socket);
         if (this.socket != null)
         {
-            console.log("Engine closing connection");
             this.socket.close(); 
         }
+        this.isConOpened = false;
+    }
+    getStateFromServer()
+    {
+        if (this.socket.readyState === this.socket.OPEN)
+            this.socket.send('state'); 
     }
     createSocket()
     {
+
         let socket = new WebSocket(`ws://fit-webtech-chess.herokuapp.com/chess?name=${this.playerName}`);
+        
         var self = this;
         
         socket.addEventListener('open', function (event) {
-            //console.log("Con opened");
             self.conOpenCallbacks.forEach((cb) => { cb(event) });
-            //console.log(event);
         });
         
         socket.addEventListener('error', function (event) {
@@ -61,16 +67,17 @@ class WebEngine
         });
         
         socket.addEventListener('close', function (event) {
-            self.socket = self.createSocket();
+            console.log('Close event');
             console.log(event);
+            if (this.isConOpened)
+                self.socket = self.createSocket();
         });
         
         socket.addEventListener('message', function (event) {
             self.messageCallbacks.forEach((cb) => { cb(event) });
-            //console.log('Message from server ', event.data);
         });
 
-        
+        return socket;
     }
 }
 

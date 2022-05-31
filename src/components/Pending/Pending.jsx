@@ -4,17 +4,18 @@ import EngineInstance from '../SocketConnection/WebEngine'
 import './pending.css'
 
 function Pending() {
-  const Navigate = useNavigate();
-  const playerName = sessionStorage.getItem('userName')
+  const navigate = useNavigate();
+  const playerName = sessionStorage.getItem('userName');
 
   const conCallback = (event) => {
-    console.log(`Connection established: \n `,event)
+    // console.log(`Connection established: \n `,event)
   };
   const messCallback = (event) => {
       console.log(`Received in callback: \n `, event)
-      if (event.data !== 'Looking for players...')
+      if (event.data !== 'Waiting for player...')
       {
-        Navigate('/');
+        sessionStorage.setItem('lastGameState', event.data);
+        navigate('/Game');
       }
     }
 
@@ -26,11 +27,7 @@ function Pending() {
     EngineInstance.addMessageCallback(
       messCallback
     );
-    console.log('sub');
-    //console.log('I fire once');
-    //isConnected = 
       return () => {
-        console.log('unsub');
         EngineInstance.delConnectCallback(conCallback);
         EngineInstance.delMessageCallback(messCallback);
       }
@@ -38,7 +35,6 @@ function Pending() {
   useEffect(() => {
     EngineInstance.establishConnection(playerName);
       return () => {
-        console.log('break con');
         EngineInstance.closeConnection();
       }
   });
