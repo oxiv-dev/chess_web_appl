@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Chess from './GameClasses';
 import { useNavigate } from 'react-router-dom';
-import EngineInstance from '../SocketConnection/WebEngine'
+import {EngineInstance, tryParseJson } from '../SocketConnection/WebEngine'
 import "./game.css"
 
 let pendingId = 0;
@@ -12,13 +12,17 @@ function Game() {
   const playerName = sessionStorage.getItem('userName');
   const Game = new Chess(playerName, null);
   const mesCallback = (event) => {
-    const data = event.data;  
-    if (data !== 'Waiting for player...')
-    {
-      let fieldData = JSON.parse(data);
-      Game.loadField(fieldData);
-      console.log('Data:', fieldData);
-    }
+    console.log(event.data);
+    // const data = event.data;  
+    // //console.log(data);
+    // const jsData = tryParseJson(data);
+    // if (jsData != null)
+    // {
+    //   if (jsData.hasOwnProperty('value'))
+    //     Game.loadField(jsData);
+    //   // console.log('Data:', fieldData);
+    // }
+    
   }
   let gameIsOn = false; 
   useEffect(() => {
@@ -29,6 +33,7 @@ function Game() {
       gameIsOn = true;
       EngineInstance.establishConnection(playerName);
       EngineInstance.addMessageCallback(mesCallback);
+      EngineInstance.addMessageCallback(Game.serverMessageCallback);
       while(gameIsOn && myId === pendingId)
       {
         EngineInstance.getStateFromServer();
@@ -40,7 +45,9 @@ function Game() {
     return () => { 
       gameIsOn = false;
       pendingId = pendingId + 1;
+      //EngineInstance.stopGameForPlayer();
       EngineInstance.delMessageCallback(mesCallback);
+      EngineInstance.delMessageCallback(Game.serverMessageCallback);
       EngineInstance.closeConnection();
     }
   }, []);

@@ -13,7 +13,6 @@ GameBody{
     align-items: center;
     background: #000000;
     background-image: url('/public/net.png');
-    /* background-image: url('/public/ChessAssets/pieces/bk.png'); */
     background-position: center;
     background-size: cover;
 }

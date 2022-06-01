@@ -1,3 +1,15 @@
+const sleep = (ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function tryParseJson(str) {
+    try {
+        const data = JSON.parse(str);
+        return data;
+    } catch (e) {
+        return null;
+    }
+}
 class WebEngine
 {
     constructor()
@@ -21,6 +33,22 @@ class WebEngine
             this.socket.close(); 
         this.socket = this.createSocket();
         this.isConOpened = true;
+    }
+    async sendMessageSafe(mes)
+    {
+        if (this.socket == null)
+            return
+        
+        while(this.socket.readyState === this.socket.CONNECTING)
+                await sleep(100);
+
+        if (this.socket.readyState === this.socket.CLOSING || this.socket.readyState === this.socket.CLOSED)
+            return;
+        
+        this.socket.send(mes);
+    }
+    stopGameForPlayer() {
+        this.sendMessageSafe('quit');
     }
     addConnectCallback(cb)
     {
@@ -48,8 +76,7 @@ class WebEngine
     }
     getStateFromServer()
     {
-        if (this.socket.readyState === this.socket.OPEN)
-            this.socket.send('state'); 
+        this.sendMessageSafe('state'); 
     }
     createSocket()
     {
@@ -59,6 +86,7 @@ class WebEngine
         var self = this;
         
         socket.addEventListener('open', function (event) {
+            console.log("Open event")
             self.conOpenCallbacks.forEach((cb) => { cb(event) });
         });
         
@@ -79,9 +107,14 @@ class WebEngine
 
         return socket;
     }
+    async requestPossibleSquaresForPiece(coord)
+    {
+        await this.sendMessageSafe(JSON.stringify(coord));
+        
+    }
 }
 
 const EngineInstance = new WebEngine();
 //Object.freeze(EngineInstance);
 
-export default EngineInstance
+export { EngineInstance, tryParseJson};

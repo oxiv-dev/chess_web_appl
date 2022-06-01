@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import EngineInstance from '../SocketConnection/WebEngine'
+import {EngineInstance} from '../SocketConnection/WebEngine'
 import './pending.css'
+
+let pendId = Math.random();
+const sleep = (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function Pending() {
   const navigate = useNavigate();
@@ -38,7 +43,19 @@ function Pending() {
         EngineInstance.closeConnection();
       }
   });
-  
+  useEffect(() => {
+    async function pendState() {
+      let myId = pendId; 
+      EngineInstance.establishConnection(playerName);
+      while(myId === pendId)
+      {
+        EngineInstance.getStateFromServer();
+        await sleep(5000);
+      }
+    }
+    
+    pendState();
+  });
   return (
     
     <div className='scale-up-center'>
