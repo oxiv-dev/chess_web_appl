@@ -81,7 +81,7 @@ class WebEngine
     createSocket()
     {
 
-        let socket = new WebSocket(`ws://fit-webtech-chess.herokuapp.com/chess?name=${this.playerName}`);
+        let socket = new WebSocket(`wss://fit-webtech-chess.herokuapp.com/chess?name=${this.playerName}`);
         
         var self = this;
         
