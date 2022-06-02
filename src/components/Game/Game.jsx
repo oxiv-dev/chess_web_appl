@@ -45,7 +45,7 @@ function Game() {
     return () => { 
       gameIsOn = false;
       pendingId = pendingId + 1;
-      //EngineInstance.stopGameForPlayer();
+      // EngineInstance.stopGameForPlayer();
       EngineInstance.delMessageCallback(mesCallback);
       EngineInstance.delMessageCallback(Game.serverMessageCallback);
       EngineInstance.closeConnection();

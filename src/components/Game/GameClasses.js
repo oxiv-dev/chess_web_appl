@@ -5,6 +5,7 @@ function invertPieceCoord(coord) {
     let invCoord = { x: coord.x, y: 7 - coord.y};
     return invCoord; 
 }
+
 // Chess Game
 class Chess {
 	constructor(playerName, chessboardParent) {
@@ -27,18 +28,42 @@ class Chess {
                     console.log('available poses: ', jsData.available);
                     
                     let availablePoses = jsData.available;
-                    if (self.info.isWhite)
+                    let boardCoordsToSet = [];
                         availablePoses.forEach(function(coord, index) {
-                            this[index] = invertPieceCoord(coord);
+                            boardCoordsToSet.push(self.data.board.getBoardCoord(coord));
+                            //this[index] = invertPieceCoord(coord);
                         }, availablePoses);
                     if (self.currentPiece != null)
-                        self.data.board.setSquarePossibilities(availablePoses, true);
+                        self.data.board.setSquarePossibilities(boardCoordsToSet, true);
                 }
-                // console.log('Data:', fieldData);
+                
+                else{
+                    console.log('Data:', jsData);
+                }
+                
             }
             
         }
 	}
+    placePiece(piece, where) {
+        const board = this.data.board;
+        const oldCoord = piece.info.coord;
+        const gameCoord = JSON.parse(where);
+        const boardCoord = board.getBoardCoord(gameCoord);
+        const square = board.filterSquare(boardCoord);
+        const info = square.info;
+        const isQualified = info.isMove || info.isEnemy || info.isCastle;
+
+        if (isQualified)
+        {
+            //console.log(piece)
+            piece.move(square, info.isCastle);   
+            const mes = `{"from":{"x": ${oldCoord.x},"y": ${oldCoord.y}},"to":{"x": ${gameCoord.x},"y": ${gameCoord.y}}}`;
+            console.log('mes: ',mes);
+            EngineInstance.sendMessageSafe(mes)
+        }
+        // console.log('Square: ', square);
+    }
     
 	// set chess info as default
 	setDefault() {
@@ -67,6 +92,8 @@ class Chess {
         this.info.turn = null;
         const player1 = new Player({ username: this.playerName, id: 1, role: (isWhite ? "white": "black") }); // player 1
         const player2 = new Player({ username: enemyName, id: 2, role: (isWhite ? "black": "white") }); // player 2
+        
+        this.players = [ player1, player2];
         //clearing board from old stuff
         this.data.board.clearBoard();
         // then create board elements
@@ -143,6 +170,7 @@ class Board {
 		};
 
 		this.game = game; // the game
+        this.isWhite = game.info.isWhite;
 		this.data = []; // empty data values
 	}
     create() {
@@ -157,13 +185,14 @@ class Board {
 			return (role = role == "white" ? "black" : "white");
 		};
 
+        
 		for (let r = 0; r < col_row; r++) {
 			const squares = []; // store all the square
 			for (let c = 0; c < col_row; c++) {
 				const letter = col[c];
 				const number = row[r];
-				const position = `${letter}${number}`; // new position
 				const boardPos = { y: r, x: c };
+				const position = JSON.stringify(this.getGameCoord(boardPos));// `${letter}${number}`; // new position
 				const square = new Square(boardPos, position, setRole(), this.game); // new square
 
 				squares.push(square); // push the square
@@ -180,17 +209,32 @@ class Board {
         }
         this.data = []; 
     }
+    getBoardCoord(gameCoord) {
+        let boardPos = { x: gameCoord.x, y: gameCoord.y};
+        if (this.game.info.isWhite)
+            boardPos.y = 7 - boardPos.y;
+        else
+            boardPos.x = 7 - boardPos.x;
+        return boardPos;
+    }
+    getGameCoord(boardCoord) {
+        let gamePos = { x: boardCoord.x, y: boardCoord.y};
+        if (this.game.info.isWhite)
+            gamePos.y = 7 - gamePos.y;
+        else
+            gamePos.x = 7 - gamePos.x;
+        return gamePos;
+    }
     placePieces(piecesData, isWhite)
     {
         const col_row = this.default.col_row;
         let id = 0;
-        
-        for (let r = 0; r < col_row; r++) {
-			for (let c = 0; c < col_row; c++) {
-                const curPieceData = piecesData[r][c];
-                const type = curPieceData.type;
+        const self = this;
+        const game = this.game;
+        piecesData.forEach((curPieceData) => {
+            const type = curPieceData.type;
                 if (type == null)
-                    continue;
+                    return;
                 
                 let alias = '';
                 const name = type.toUpperCase();
@@ -202,14 +246,10 @@ class Board {
                 else
                     alias = `b${type}`;
                 
-                const boardCoord  = { y: curPieceData.y, x: curPieceData.x };
-                let position = { y: curPieceData.y, x: curPieceData.x }; 
-                if (isWhite)
-                {
-                    position = invertPieceCoord(position);
-                }
-                const id = r*8+c;
-                const obj = { name: name, alias: alias, index: id, coord : boardCoord };
+                const gameCoord  = { y: curPieceData.y, x: curPieceData.x };
+                const position = self.getBoardCoord(gameCoord);
+                const mId = id++;
+                const obj = { name: name, alias: alias, index: mId, coord : gameCoord };
                     
                 const piece = new Piece(obj, this.game); // new Piece
                 // console.log(piece);
@@ -219,9 +259,53 @@ class Board {
                 piece.square = square; // declare square into piece
 			    square.piece = piece; // declare piece into square
 
+                let player = null;
+                if ((game.players[0].role == "white" && isWhite) || (game.players[0].role == "black" && !isWhite))
+                    player = game.players[0];
+                else
+                    player = game.players[1];
+
 			    squareElement.appendChild(pieceElement); // just append the image to the square el
-            }
-        }
+        })
+        // for (let r = 0; r < col_row; r++) {
+		// 	for (let c = 0; c < col_row; c++) {
+        //         const curPieceData = piecesData[r][c];
+        //         const type = curPieceData.type;
+        //         if (type == null)
+        //             continue;
+                
+        //         let alias = '';
+        //         const name = type.toUpperCase();
+        //         const whitePiece = (type.toUpperCase() === type);
+        //         if (type.toUpperCase() === type){
+                    
+        //             alias = `w${type.toLowerCase()}`;
+        //         }
+        //         else
+        //             alias = `b${type}`;
+                
+        //         const gameCoord  = { y: curPieceData.y, x: curPieceData.x };
+        //         const position = self.getBoardCoord(gameCoord);
+        //         const id = r*8+c;
+        //         const obj = { name: name, alias: alias, index: id, coord : gameCoord };
+                    
+        //         const piece = new Piece(obj, this.game); // new Piece
+        //         // console.log(piece);
+        //         let square = this.filterSquare(position); // select square acccording to its pos
+		// 	    let pieceElement = piece.info.element; // piece image
+		// 	    let squareElement = square.info.element; // and the square element
+        //         piece.square = square; // declare square into piece
+		// 	    square.piece = piece; // declare piece into square
+
+        //         let player = null;
+        //         if ((game.players[0].role == "white" && isWhite) || (game.players[0].role == "black" && !isWhite))
+        //             player = game.players[0];
+        //         else
+        //             player = game.players[1];
+
+		// 	    squareElement.appendChild(pieceElement); // just append the image to the square el
+        //     }
+        // }
     }
     filterSquare(bp) {
 		// check if it is already an object
@@ -286,6 +370,91 @@ class Piece {
 
 		this.init();
 	}
+    move(square, isCastling) {
+        let old = this.square;
+		// eat piece inside
+		this.eat(square.piece);
+		// move piece into the square
+		this.silentMove(square);
+		// move the image into the square element
+		this.moveElementTo(square);
+
+		// trigger, finished moved
+		//this.game.moved(old, square);
+
+		// if the move is castling, then castle
+		isCastling && this.castling();
+    }
+    eat(piece) {
+		if (!piece) return;
+		const piecePlayer = piece.player;
+		const player = this.player;
+
+		// if element exist, remove the element
+		piece.info.element && piece.info.element.remove();
+
+		// insert into the target player dropped pieces
+		// piecePlayer.data.dropped.push(piece);
+		// // remove piece into the target player pieces
+		// piecePlayer.data.pieces.splice(piecePlayer.data.pieces.indexOf(piece), 1);
+		// // insert into the player eated pieces
+		// player.data.eated.push(piece);
+
+		return piece;
+	}
+    moveElementTo(square) {
+		// set fastpawn and castling to false
+		this.info.fastpawn = false;
+		this.info.castling = false;
+
+		// append the element into the target square element
+		square.info.element.appendChild(this.info.element);
+	}
+    silentMove(square) {
+		const piece = this;
+		const board = this.game.data.board;
+
+		// make sure it is Square object
+		//square = board.filterSquare(square);
+
+		// set first to false
+		square.piece = false;
+		piece.square.piece = false;
+
+		// change data
+		square.piece = piece;
+		piece.square = square;
+		piece.info.position = square.info.position;
+        piece.info.coord = board.getGameCoord(square.info.position);
+		piece.square.piece = piece;
+	}
+    castling() {
+		// castling only if it is king
+		if (this.info.name != "K") return false;
+
+		// const game = this.game;
+		// const board = game.data.board.data;
+		// const { x, y } = this.square.info.boardPosition;
+
+		// const check = function (piece, square, condition) {
+		// 	// move only if the condition is true
+		// 	if (!condition) return;
+
+		// 	// move piece into the square
+		// 	piece.silentMove(square);
+		// 	// move element into the square element
+		// 	piece.moveElementTo(square);
+		// };
+
+		// // right and left rook
+		// const rr = board[y][x + 1].piece;
+		// const lr = board[y][x - 2].piece;
+
+		// // check each rook
+		// check(rr, board[y][x - 1], rr && rr.info.name == "Rook");
+		// check(lr, board[y][x + 1], lr && lr.info.name == "Rook");
+	}
+
     init() {
 		this.create(); // create new Image element
 		this.listener(); // some listeners
@@ -355,7 +524,9 @@ class Piece {
                 {
                     return false;
                 }
-				//piece.player.move(piece, current.getAttribute("data-position"));
+				game.placePiece(piece, current.getAttribute("data-position"));
+                board.resetSquares();
+
                 game.currentPiece = null;
                 //board.resetSquares();
 			};
@@ -392,9 +563,7 @@ class Piece {
 			// get the piece possibilities, values(moves(array), enemies(array), castling(array))
 			// then show circles to all that squares
 			// board.setSquarePossibilities(piece, true);
-            let coordToPlace = piece.info.coord;
-            if (piece.game.info.isWhite)
-                coordToPlace = invertPieceCoord(coordToPlace);
+            let coordToPlace = board.getBoardCoord(piece.info.coord);
             
             console.log('coord: ', piece.info);
             EngineInstance.requestPossibleSquaresForPiece(piece.info.coord);
