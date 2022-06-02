@@ -9,35 +9,49 @@ function Game() {
   const sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+  const navigate = useNavigate();
   const playerName = sessionStorage.getItem('userName');
   const Game = new Chess(playerName, null);
+  let resign = false;
+  const mateCallback = (isMe) => {
+    let mateMes = isMe ? 'It`s mate, you lost(' : 'It`s mate, you win!';
+    window.confirm(mateMes);
+    navigate("/");
+  }
+  const checkCallback = (isMe) => {
+    const checkMes = 'Check!';
+    let result = window.confirm(checkMes);
+  }
   const mesCallback = (event) => {
-    console.log(event.data);
-    // const data = event.data;  
-    // //console.log(data);
-    // const jsData = tryParseJson(data);
-    // if (jsData != null)
-    // {
-    //   if (jsData.hasOwnProperty('value'))
-    //     Game.loadField(jsData);
-    //   // console.log('Data:', fieldData);
-    // }
-    
+    if (event.data === 'Player quit the game!' && !resign) {
+      window.confirm('It seems that your opponent resigned. Well Played!');
+      navigate("/");
+    }
   }
   let gameIsOn = false; 
+  const quitButtonCallback = () => {
+    let result = window.confirm('Do you want to end the game?');
+    if (result) {
+      EngineInstance.stopGameForPlayer();
+      resign = true;
+      navigate("/");
+    }
+  }
   useEffect(() => {
     const chessboardParent = document.getElementById("chessboard");
     Game.chessboardParent = chessboardParent;
     async function initSocketChecking() {
       let myId = pendingId; 
       gameIsOn = true;
+      Game.onCheckMate(mateCallback);
+      Game.onCheck(checkCallback);
       EngineInstance.establishConnection(playerName);
       EngineInstance.addMessageCallback(mesCallback);
       EngineInstance.addMessageCallback(Game.serverMessageCallback);
       while(gameIsOn && myId === pendingId)
       {
         EngineInstance.getStateFromServer();
-        await sleep(5000);
+        await sleep(50000);
       }
     }
     
@@ -45,7 +59,6 @@ function Game() {
     return () => { 
       gameIsOn = false;
       pendingId = pendingId + 1;
-      // EngineInstance.stopGameForPlayer();
       EngineInstance.delMessageCallback(mesCallback);
       EngineInstance.delMessageCallback(Game.serverMessageCallback);
       EngineInstance.closeConnection();
@@ -77,9 +90,9 @@ function Game() {
 					</div>
 				</div>
 				<div className="rows row-2">
-					<div className="timer">
+					{/* <div className="timer">
 						<span>00:00</span>
-					</div>
+					</div> */}
 				</div>
 			</div>
 
@@ -87,9 +100,9 @@ function Game() {
 
 			<div className="player-card player-1">
 				<div className="rows row-2">
-					<div className="timer">
+					{/* <div className="timer">
 						<span>00:00</span>
-					</div>
+					</div> */}
 				</div>
 				<div className="rows row-1">
 					<div className="icon"></div>
@@ -105,6 +118,8 @@ function Game() {
 		</div>
 		{/* <script src="GameClasses.js"></script> */}
 	</div>
+  <button className="button-85" role="button" onClick={() => { quitButtonCallback(); }}> Resign </button>
+
   </div>
   )
 }

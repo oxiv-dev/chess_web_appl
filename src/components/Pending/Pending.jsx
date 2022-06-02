@@ -16,7 +16,6 @@ function Pending() {
     // console.log(`Connection established: \n `,event)
   };
   const messCallback = (event) => {
-      console.log(`Received in callback: \n `, event)
       if (event.data !== 'Waiting for player...')
       {
         sessionStorage.setItem('lastGameState', event.data);

@@ -1,11 +1,10 @@
 import { EngineInstance, tryParseJson } from "../SocketConnection/WebEngine";
 
 // const chessboardParent = document.getElementById("chessboard");
-function invertPieceCoord(coord) {
-    let invCoord = { x: coord.x, y: 7 - coord.y};
-    return invCoord; 
-}
 
+function isFieldDataSame(data1, data2) {
+    return (JSON.stringify(data1) === JSON.stringify(data2)); 
+}
 // Chess Game
 class Chess {
 	constructor(playerName, chessboardParent) {
@@ -13,19 +12,32 @@ class Chess {
         this.chessboardParent = chessboardParent;
         this.playerName = playerName;
         this.currentPiece = null;
+        this.mateCallback = null;        
+        this.checkCallback = null;     
+        this.prevFieldData = null;   
         const self = this;
         this.serverMessageCallback = (event) => {
             const data = event.data;
             const jsData = tryParseJson(data);
+            
             if (jsData != null)
             {
                 if (jsData.hasOwnProperty('value'))
                 {
-                    self.loadField(jsData);
+                    if(!isFieldDataSame(self.prevFieldData, jsData)) {
+                        const playerCard = document.querySelector(`.player-card.player-${1}`);
+                        const username = playerCard.querySelector(".row-1 .text .headline h4");
+                        username.innerText = self.playerName;
+                        const enemyCard = document.querySelector(`.player-card.player-${2}`);
+                        const enemyname = enemyCard.querySelector(".row-1 .text .headline h4");
+                        enemyname.innerText = jsData.enemy;
+
+                        self.loadField(jsData);
+                        self.prevFieldData = jsData;
+                    }
                 }
                 else if (jsData.hasOwnProperty('spot'))
                 {
-                    console.log('available poses: ', jsData.available);
                     
                     let availablePoses = jsData.available;
                     let boardCoordsToSet = [];
@@ -36,15 +48,43 @@ class Chess {
                     if (self.currentPiece != null)
                         self.data.board.setSquarePossibilities(boardCoordsToSet, true);
                 }
-                
-                else{
-                    console.log('Data:', jsData);
+                else if (jsData.hasOwnProperty('type'))
+                {
+                    const isCheckToPlayer = (gameCoord) => {
+                        const boardCoord = self.data.board.getBoardCoord(gameCoord);
+                        const square = self.data.board.filterSquare(boardCoord);
+                        const piece = square.piece;
+                        const isWhite = (piece.info.alias.charAt(0) === "w");
+                        const isToPlayer = (this.info.isWhite === isWhite);
+                        return isToPlayer;
+                    };
+                    if (jsData.type === "check")
+                    {
+                        const gameCoord = jsData.square;
+                        const isToPlayer = isCheckToPlayer(gameCoord);
+                        // console.log(jsData);
+                        // console.log(piece.info.alias.charAt(0));
+                        self.checkCallback(isToPlayer);
+                    }
+                    else if (jsData.type === "checkmate")
+                    {
+                        const gameCoord = jsData.square;
+                        const isToPlayer = isCheckToPlayer(gameCoord);
+                        self.mateCallback(isToPlayer);
+                    }
                 }
                 
             }
             
         }
 	}
+    onCheck(callback) {
+        this.checkCallback = callback;   
+    }
+    onCheckMate(callback) {
+        this.mateCallback = callback;        
+        
+    }
     placePiece(piece, where) {
         const board = this.data.board;
         const oldCoord = piece.info.coord;
@@ -59,7 +99,6 @@ class Chess {
             //console.log(piece)
             piece.move(square, info.isCastle);   
             const mes = `{"from":{"x": ${oldCoord.x},"y": ${oldCoord.y}},"to":{"x": ${gameCoord.x},"y": ${gameCoord.y}}}`;
-            console.log('mes: ',mes);
             EngineInstance.sendMessageSafe(mes)
         }
         // console.log('Square: ', square);
@@ -99,7 +138,6 @@ class Chess {
         // then create board elements
         this.data.board.create();
         this.data.board.placePieces(field, isWhite);
-        console.log(this.chessboardParent);
     }
 
     async init(callback) {
@@ -113,52 +151,6 @@ class Chess {
 		callback && callback.call(this);
 	}
 
-	// assign players (player1,player2) 
-    //TODO: use server
-	async assignPlayers() {
-		// will return a promise
-		return new Promise((resolve) => {
-			const player1 = new Player({ username: "Orlan", id: 1, role: "white" }); // player 1
-			const player2 = new Player({ username: "Magnus", id: 2, role: "black" }); // player 2
-
-			this.data.players = [player1, player2]; // assign into the game players
-
-			// player 1 is first to move
-			this.info.turn = player1;
-			player1.info.isTurn = true;
-
-			resolve(); // return
-		});
-	}
-
-
-	notify() {
-		const players = this.data.players;
-		const ischecked = players[0].info.isChecked || players[1].info.isChecked;
-		const checkedPlayer = this.checkedPlayer();
-		ischecked && console.log(checkedPlayer.data.username + "  is checked");
-	}
-
-	// when their is a winner
-	winner() {
-		const Winner = this.info.won;
-		const CreatePopUp = function () {};
-
-		console.log(`The winner is ${Winner.data.username}`);
-
-		CreatePopUp();
-	}
-
-	// end the game
-	checkmate(player) {
-		this.info.started = false;
-		this.info.ended = true;
-		this.info.won = player;
-
-		console.log(`${this.info.turn.data.username} is Mate`);
-
-		this.winner();
-	}
 }
 
 class Board {
@@ -267,45 +259,6 @@ class Board {
 
 			    squareElement.appendChild(pieceElement); // just append the image to the square el
         })
-        // for (let r = 0; r < col_row; r++) {
-		// 	for (let c = 0; c < col_row; c++) {
-        //         const curPieceData = piecesData[r][c];
-        //         const type = curPieceData.type;
-        //         if (type == null)
-        //             continue;
-                
-        //         let alias = '';
-        //         const name = type.toUpperCase();
-        //         const whitePiece = (type.toUpperCase() === type);
-        //         if (type.toUpperCase() === type){
-                    
-        //             alias = `w${type.toLowerCase()}`;
-        //         }
-        //         else
-        //             alias = `b${type}`;
-                
-        //         const gameCoord  = { y: curPieceData.y, x: curPieceData.x };
-        //         const position = self.getBoardCoord(gameCoord);
-        //         const id = r*8+c;
-        //         const obj = { name: name, alias: alias, index: id, coord : gameCoord };
-                    
-        //         const piece = new Piece(obj, this.game); // new Piece
-        //         // console.log(piece);
-        //         let square = this.filterSquare(position); // select square acccording to its pos
-		// 	    let pieceElement = piece.info.element; // piece image
-		// 	    let squareElement = square.info.element; // and the square element
-        //         piece.square = square; // declare square into piece
-		// 	    square.piece = piece; // declare piece into square
-
-        //         let player = null;
-        //         if ((game.players[0].role == "white" && isWhite) || (game.players[0].role == "black" && !isWhite))
-        //             player = game.players[0];
-        //         else
-        //             player = game.players[1];
-
-		// 	    squareElement.appendChild(pieceElement); // just append the image to the square el
-        //     }
-        // }
     }
     filterSquare(bp) {
 		// check if it is already an object
@@ -331,7 +284,6 @@ class Board {
 		this.resetSquares();
 
 		// then set square properties according to possibilities values
-        console.log('setting position');
         positions.forEach((pos) => {
             // console.log('Set pos: ', pos);
             let square = this.filterSquare(pos);
@@ -387,8 +339,6 @@ class Piece {
     }
     eat(piece) {
 		if (!piece) return;
-		const piecePlayer = piece.player;
-		const player = this.player;
 
 		// if element exist, remove the element
 		piece.info.element && piece.info.element.remove();
@@ -563,9 +513,6 @@ class Piece {
 			// get the piece possibilities, values(moves(array), enemies(array), castling(array))
 			// then show circles to all that squares
 			// board.setSquarePossibilities(piece, true);
-            let coordToPlace = board.getBoardCoord(piece.info.coord);
-            
-            console.log('coord: ', piece.info);
             EngineInstance.requestPossibleSquaresForPiece(piece.info.coord);
 
 			game.currentPiece = piece;

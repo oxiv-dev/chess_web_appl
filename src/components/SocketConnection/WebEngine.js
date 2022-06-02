@@ -86,17 +86,13 @@ class WebEngine
         var self = this;
         
         socket.addEventListener('open', function (event) {
-            console.log("Open event")
             self.conOpenCallbacks.forEach((cb) => { cb(event) });
         });
         
         socket.addEventListener('error', function (event) {
-            console.log('Error: ', event);
         });
         
         socket.addEventListener('close', function (event) {
-            console.log('Close event');
-            console.log(event);
             if (this.isConOpened)
                 self.socket = self.createSocket();
         });

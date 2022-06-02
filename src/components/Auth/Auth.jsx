@@ -5,11 +5,16 @@ import React, { useState } from 'react';
 function Auth() {
 
     const Navigate = useNavigate();
+    const savedName = sessionStorage.getItem('userName');
+    const [userName, setMessage] = useState( savedName );
     let ClickCallback = () => { 
+        if (userName === ''){
+            window.confirm('name should not be empty!');
+            return;
+        }
         sessionStorage.setItem('userName', userName);
         Navigate("/pending");
     }
-    const [userName, setMessage] = useState( '' );
   return (
       <div className='auth'>
       <form>
@@ -18,7 +23,9 @@ function Auth() {
                     className="inputField"
                     type="text"
                     onChange={e => setMessage(e.target.value)} 
-                    required/>
+                    required
+                    value = {userName}
+                    /> 
               </p>
               <p><button onClick={() => { ClickCallback(); }}
               className="submitButton">OK</button></p>
